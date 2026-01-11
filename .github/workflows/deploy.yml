@@ -37,7 +37,8 @@ jobs:
       # 4. Docker 이미지 빌드 & 푸시
       - name: Build and push image
         run: |
-          IMAGE=ghcr.io/${{ github.repository_owner }}/gangwon-wsy:${{ steps.version.outputs.TAG }}
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE=ghcr.io/$OWNER/gangwon-wsy:${{ steps.version.outputs.TAG }}
           docker build -t $IMAGE .
           docker push $IMAGE
 
@@ -49,6 +50,7 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
             cd ~/workspace/deploy/upstage-gangwon-fastapi-lecture
-            sed -i "s|image:.*|image: ghcr.io/${{ github.repository_owner }}/gangwon-wsy:${{ steps.version.outputs.TAG }}|" infra/k8s/application/04-backend.yaml
+            sed -i "s|image:.*|image: ghcr.io/$OWNER/gangwon-wsy:${{ steps.version.outputs.TAG }}|" infra/k8s/application/04-backend.yaml
             kubectl apply -f infra/k8s/application/04-backend.yaml
