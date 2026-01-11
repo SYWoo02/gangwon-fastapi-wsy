@@ -51,7 +51,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-            cd ~/workspace/deploy/upstage-gangwon-fastapi-
+            cd ~/workspace/deploy/upstage-gangwon-fastapi-lecture
             
             git fetch origin
             git checkout deploy/version
