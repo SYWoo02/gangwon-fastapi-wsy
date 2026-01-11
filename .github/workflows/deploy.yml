@@ -1,0 +1,54 @@
+name: Deploy to K8s
+
+on:
+  push:
+    branches:
+      - deploy/version
+
+permissions:
+  contents: read
+  packages: write   # GHCR 업로드 권한
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 코드 체크아웃
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. GHCR 로그인
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 3. 버전 생성 (pyproject.toml + commit hash)
+      - name: Generate version
+        id: version
+        run: |
+          VERSION=$(grep '^version' pyproject.toml | cut -d '"' -f2)
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          echo "TAG=${VERSION}-${SHORT_SHA}" >> $GITHUB_OUTPUT
+
+      # 4. Docker 이미지 빌드 & 푸시
+      - name: Build and push image
+        run: |
+          IMAGE=ghcr.io/${{ github.repository_owner }}/gangwon-wsy:${{ steps.version.outputs.TAG }}
+          docker build -t $IMAGE .
+          docker push $IMAGE
+
+      # 5. EC2 접속해서 K8s 배포
+      - name: Deploy on K8s
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/workspace/deploy/upstage-gangwon-fastapi-lecture
+            sed -i "s|image:.*|image: ghcr.io/${{ github.repository_owner }}/gangwon-wsy:${{ steps.version.outputs.TAG }}|" infra/k8s/application/04-backend.yaml
+            kubectl apply -f infra/k8s/application/04-backend.yaml
