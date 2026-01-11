@@ -1,0 +1,40 @@
+services:
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: gangwon-wsy-chromadb
+    ports:
+      - "18000:8000"
+    environment:
+      CHROMA_HOST_ADDR: 0.0.0.0
+      CHROMA_HOST_PORT: 8000
+      CHROMA_PERSIST_DIRECTORY: /chroma/.chroma
+    volumes:
+      - chroma_data:/chroma/.chroma
+    networks:
+      - gangwon-network
+    restart: unless-stopped
+
+  backend:
+    image: gangwon-wsy-backend:lite
+    container_name: gangwon-wsy-backend
+    ports:
+      - "8880:8880"
+    env_file:
+      - .env
+    environment:
+      APP_ENV: development
+      CHROMA_HOST: chromadb
+      CHROMA_PORT: 8000
+      CHROMA_COLLECTION_NAME: upstage_embeddings
+    depends_on:
+      - chromadb
+    networks:
+      - gangwon-network
+    restart: unless-stopped
+
+volumes:
+  chroma_data:
+
+networks:
+  gangwon-network:
+    driver: bridge

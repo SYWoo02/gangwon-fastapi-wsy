@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: wsy
+data:
+  CHROMA_HOST: "chromadb"
+  CHROMA_PORT: "8000"
+  UPSTAGE_API_KEY: "${UPSTAGE_API_KEY}"
