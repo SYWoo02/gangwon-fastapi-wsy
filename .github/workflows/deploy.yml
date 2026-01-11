@@ -51,6 +51,11 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-            cd ~/workspace/deploy/upstage-gangwon-fastapi-lecture
+            cd ~/workspace/deploy/upstage-gangwon-fastapi-
+            
+            git fetch origin
+            git checkout deploy/version
+            git pull origin deploy/version
+            
             sed -i "s|image:.*|image: ghcr.io/$OWNER/gangwon-wsy:${{ steps.version.outputs.TAG }}|" infra/k8s/application/04-backend.yaml
             kubectl apply -f infra/k8s/application/04-backend.yaml
